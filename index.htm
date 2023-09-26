@@ -1,0 +1,247 @@
+<html>
+	<head>
+		<!-- Developed by Julian Cassin. 2019-2020. -->
+		<script type="text/javascript" src="js/jquery-3.3.1.min.js"></script>
+		<script type="text/javascript" src="js/ace/ace.js" charset="utf-8"></script>
+
+		<style type="text/css" media="screen">
+			#ge-input 
+			{			
+				bottom: 0;
+				height: 90%;
+				left: 0;
+				position: absolute;
+				right: 0;
+				top: 0;
+				width: 50%;
+			}
+
+			#ge-output
+			{			
+				bottom: 0;
+				height: 90%;
+				left: 50%;
+				position: absolute;
+				right: 0;
+				top: 0;
+				width: 50%;
+			}
+
+			#ge-controls
+			{			
+				bottom: 0;
+				height: 10%;
+				left: 0;
+				position: absolute;
+				right: 0;
+				top: 90%;
+				width: 100%;
+			}
+
+			#ge-errors
+			{			
+				bottom: 0;
+				display: none;
+				height: 10%;
+				left: 0;
+				position: absolute;
+				right: 0;
+				top: 90%;
+				width: 100%;
+			}
+		</style>
+	</head>
+
+	<body>
+		<div id="ge-input">
+// JSCompile v0.2 (31 May 2020) By Julian Cassin:
+// 
+// This is a work in progress JavaScript (subset) to Z80 compiler.
+//
+// bugs:
+//	- remove a return void immediately following another return, usually as 
+//    a result of falling off a function
+//
+// limitations:
+//
+//	- Parenthesis { and } should be only 1 on a new line
+//	- Parenthesis { and } must be present for all code blocks
+//	- no recursion (for now), all variables and parameters are NOT locals
+//	- statements must be on a single line
+//  - all statements should end in a semi-colon ;
+//	- except for the class function and it's members, function declarations 
+//    cannot be nested
+//	- functions cannot be anonymous
+//	- only functions can be global (i.e. they are classes)
+//	- functions cannot be nested below that of the containing class function
+//
+// options:
+//
+//  - includecomments
+//  - includesourceascomments
+//  - includesourcewhitespace
+//  - includeignoredstatements
+//
+//	done:
+//
+//						whitespace
+//						source_comment, original_comment
+//	function 			class_start, class_end, return_void
+//						call_constructor, constructor_start, constructor_end
+//	function			publicfunction_start, publicfunction_end, declare_parameters, 
+//	function			privatefunction_start, privatefunction_end, declare_parameters
+//	if					if_start, if_end
+//						constructor_if_start, constructor_if_end
+//	while				while_start, while_end
+//						constructor_while_start, constructor_while_end
+//	var					declare_variable, set_variable
+//						constructor_declare_variable, constructor_set_variable
+//						reserve_variable, 
+//	evaluation			eval_expression
+//						constructor_eval_expression
+//	return				return_void
+//	return <x>			return_value
+//	<x>					call
+//
+// Operators supported in precedence order:
+//
+// NEW, !, ~, ++, --, **, *, /, %, +, -, <<, >>, >>>, 
+// <, <=, >, >=, ==, !=, ===, !==, &, ^, |, &&, ||, 
+// +=, -=, **=, *=, /=, %=, <<=, >>=, >>>=, &=, ^=, |=
+// 
+// Operators treated special:
+//
+// =
+// Operators not yet supported:
+// 
+// -x, TYPEOF, DELETE, IN, INSTANCEOF, ++x, --x
+//
+// To target an alternate CPU, currently all actual target CPU code is within the following
+// output functions, once an initial target CPU is completed and working, it is likely a plugin 
+// target solution will be added:
+//
+//  - outputCall
+//  - outputComment
+//  - outputDefineWord
+//  - outputExpression
+//  - outputJump
+//  - outputJumpZero
+//  - outputLabel
+//  - outputReturn
+//  - outputSetVariable
+// 
+// type the below function below and see the compiled code on the right appear as you type
+// 
+// function Example1()
+// {
+//     var TEST1=1;
+//     var TEST2=TEST1*5;
+//     var TEST3=(TEST2+TEST1)*2;
+//     
+//     var loopCounter=10;
+//     while (loopCounter>0)
+//     {
+//         loopCounter--;
+//     }
+// }
+// 
+// function Example2()
+// {
+//     var TEST1=6+3*4/2-9;
+//     var TEST2   =   6 + 3 * 4 / 2 - 9;
+//     var TEST3=(6 + (((3 * 4) / 2) - 9));
+//     var TEST4=(6+(((3*4)/2)-9));
+//     var TEST5=(6+3)*4/(2-9);
+//     var TEST6=TEST1++;
+// }
+// 
+// // example class structure
+// function myClass()
+// {
+//     var myMemberVariable = 1;
+//     function myMemberMethod()
+//     {
+//     	 var myFunctionVariable = 2;
+//     }
+//     myMemberMethod(); // call member method (becomes part of constructor)
+// }
+//
+// function myClass2()
+// {
+//     var myMemberVariable;
+//     function myMemberMethod()
+//     {
+//     	 myMemberVariable = new myClass();
+//     }
+//     myMemberMethod(); // call member method (becomes part of constructor)
+// }
+
+<!-- //test program 2
+function Main2()
+{
+	var m_objScreen = new Screen();
+	
+	function initialise(blnRender_a)
+	{
+		var blnResult = true;
+		
+		if (blnRender_a)
+		{
+			m_objScreen.render();
+		}
+		
+		return blnResult;
+	}
+
+	if (blnRender_a)
+	{
+		m_objScreen.render();
+	}
+		
+	while (1)
+	{
+		dosomething();
+	}
+	
+	initialise(true);
+}
+
+function Screen()
+{
+	var m_intX = 0;
+	var m_intY = 0;
+	
+	this.render = function()
+	{
+		if (blnRender_a)
+		{
+			m_objScreen.render();
+		}
+	};
+	
+	this.setX = function(intX_a)
+	{
+		m_intX = intX_a;
+	};
+	
+	this.setY = function(intY_a)
+	{
+		m_intY = intY_a;
+	};
+} -->
+</div>
+		<div id="ge-output"></div>
+		<div id="ge-controls">
+			Debug Compiler: <input type="checkbox" id="debugCompiler" onclick="onReConfig()"> 
+			Include Comments: <input type="checkbox" id="includeComments" onclick="onReConfig()"> 
+			Include Source As Comments: <input type="checkbox" id="includeSourceAsComments" onclick="onReConfig()"> 
+			Include Source Whitespace: <input type="checkbox" id="includeSouceWhitespace" onclick="onReConfig()"> 
+			Include Source Line Numbers: <input type="checkbox" id="includeSourceLineNumbers" onclick="onReConfig()" checked="checked"> 
+		</div>
+		<!-- <div id="ge-errors"></div> -->
+	</body>
+
+	<script type="application/javascript" src="js/iftopf.js"></script>
+	<script type="application/javascript" src="js/compile.js"></script>
+	<script type="application/javascript" src="js/index.js"></script>
+</html>
