@@ -269,7 +269,7 @@ function isOperator(arrOperators_a, strOperator_a)
 
 function maybeIdentifier(str_a)
 {
-	return ("abcdefghijklmnopqrstuvwxyz1234567890".indexOf(str_a.toLowerCase()) > -1);
+	return ("abcdefghijklmnopqrstuvwxyz1234567890_".indexOf(str_a.toLowerCase()) > -1);
 }
 
 function maybeOperator(str_a)

@@ -1,6 +1,13 @@
-// JSCompile v0.2 (31 May 2020) By Julian Cassin:
+// JSCompile v0.3 (30 August 2024) By Julian Cassin:
 // 
 // This is a work in progress JavaScript (subset) to Z80 compiler.
+//
+// todo:
+//
+// - NEW, object allocation
+// - CALL, function
+// - PARAMETERS
+// - RETURN
 //
 // bugs:
 //	- remove a return void immediately following another return, usually as 
@@ -8,6 +15,7 @@
 //
 // limitations:
 //
+//  - classes for now are purely syntactic sugar, the NEW statement doesn't actually create a new instance of a class
 //	- Parenthesis { and } should be only 1 on a new line
 //	- Parenthesis { and } must be present for all code blocks
 //	- no recursion (for now), all variables and parameters are NOT locals
@@ -17,6 +25,7 @@
 //    cannot be nested
 //	- functions cannot be anonymous
 //	- only functions can be global (i.e. they are classes)
+//	- no global variables
 //	- functions cannot be nested below that of the containing class function
 //
 // options:
@@ -285,6 +294,45 @@ function compile(strInput_a, objOptions_a)
 	function parse1(arrInput_a)
 	{
 		arrResult = [];
+		
+		function getVariable(strClassName_a, strFunctionName_a, str_a)
+		{
+			var strResult = '';
+			var strVariable = strClassName_a + '_' + strFunctionName_a + '_' + str_a;
+			
+			if (isVariable(strVariable))
+			{
+				strResult = strVariable.toLowerCase();
+			}
+			else
+			{
+				strVariable = strClassName_a + '__' + str_a;
+				
+				if (isVariable(strVariable))
+				{
+					strResult = strVariable.toLowerCase();
+				}
+			}
+			
+			return strResult;
+		}
+
+		function isVariable(str_a)
+		{
+			var blnResult = false;
+			
+			// process variables
+			processArray(arrVariables, function(objVariable_a)
+			{
+				if (objVariable_a.line.toLowerCase() === str_a.toLowerCase())
+				{
+					blnResult = true;
+					return true;
+				}
+			});
+			
+			return blnResult;
+		}
 		
 		// process each line of input
 		processArray(arrInput_a, function(strLine_a, intLineNumber_a)
@@ -602,8 +650,7 @@ function compile(strInput_a, objOptions_a)
 							{
 								// get expression
 								intStart = intEnd;
-								//intStart++;
-								intEnd = strInput.length - 1; //indexOf(')', intStart);
+								intEnd = strInput.length - 1;
 								blnFound = (intStart > 0) && (intEnd > 0);
 								
 								if (!blnFound)
@@ -639,12 +686,11 @@ function compile(strInput_a, objOptions_a)
 								}
 							}
 						}
-						else if (strInput.indexOf('if ') === 0)	// if statement
+						else if ((strInput.indexOf('if ') === 0) || (strInput.indexOf('if(') === 0))	// if statement
 						{
 							// get expression
-							intStart = strInput.indexOf(' ');
-							intEnd = strInput.indexOf('(', intStart);
-							blnFound = (intStart > 0) && (intEnd > 0);
+							intStart = strInput.indexOf('(');
+							blnFound = (intStart > 0);
 							
 							if (!blnFound)
 							{
@@ -658,9 +704,7 @@ function compile(strInput_a, objOptions_a)
 							else
 							{
 								// get expression
-								intStart = intEnd;
-								//intStart++;
-								intEnd = strInput.length - 1; //indexOf(')', intStart);
+								intEnd = strInput.length - 1;
 								blnFound = (intStart > 0) && (intEnd > 0);
 								
 								if (!blnFound)
@@ -703,12 +747,11 @@ function compile(strInput_a, objOptions_a)
 								}
 							}
 						}
-						else if (strInput.indexOf('while ') === 0)	// while statement
+						else if ((strInput.indexOf('while (') === 0) || (strInput.indexOf('while(') === 0))	// while statement
 						{
 							// get expression
-							intStart = strInput.indexOf(' ');
-							intEnd = strInput.indexOf('(', intStart);
-							blnFound = (intStart > 0) && (intEnd > 0);
+							intStart = strInput.indexOf('(');
+							blnFound = (intStart > 0);
 							
 							if (!blnFound)
 							{
@@ -721,11 +764,8 @@ function compile(strInput_a, objOptions_a)
 							}
 							else
 							{
-								intStart++;
-
 								// get expression
-								intStart = intEnd;
-								intEnd = strInput.length - 1; //indexOf(')', intStart);
+								intEnd = strInput.length - 1;
 								blnFound = (intStart > 0) && (intEnd > 0);
 								
 								if (!blnFound)
@@ -899,7 +939,7 @@ function compile(strInput_a, objOptions_a)
 							if (blnFound)
 							{
 								strVariable = strInput.substring(intStart, intEnd).trim().toUpperCase();
-								strVariable = strInClassName + '_' + strInFunctionName + '_' + strVariable;
+								strVariable = getVariable(strInClassName, strInFunctionName, strVariable);
 
 								if (strVariable.length > 0)
 								{
@@ -946,7 +986,7 @@ function compile(strInput_a, objOptions_a)
 									if (blnFound)
 									{
 										strVariable = strInput.substring(0, intStart).trim().toUpperCase();
-										strVariable = strInClassName + '_' + strInFunctionName + '_' + strVariable;
+										strVariable = getVariable(strInClassName, strInFunctionName, strVariable);
 
 										strExpression = strInput.substring(0, intEnd).trim().toUpperCase();
 
@@ -1082,7 +1122,7 @@ function compile(strInput_a, objOptions_a)
 
 			if (arrExpression[1] == 'NEW')
 			{
-				strResult += '\t; TODO NEW, object allocation ' + arrExpression[0] + '\\s';	// TODO 1
+				strResult += '\t; TODO NEW, object allocation ' + arrExpression[0] + '\\s';	// NOT YET IMPLEMENTED
 			}
 			else
 			{
@@ -1104,7 +1144,7 @@ function compile(strInput_a, objOptions_a)
 					}
 					else if (strFunction.length > 0)
 					{
-						strResult += '\t; TODO CALL, function ' + strFunction + '\\s';	// TODO 1
+						strResult += '\t; TODO CALL, function ' + strFunction + '\\s';	// NOT YET IMPLEMENTED
 					}
 					else	// must be a literal
 					{
@@ -1132,7 +1172,7 @@ function compile(strInput_a, objOptions_a)
 						}
 						else if (strFunction.length > 0)
 						{
-							strResult += '\t; TODO CALL, function ' + strFunction + '\\s';	// TODO 1
+							strResult += '\t; TODO CALL, function ' + strFunction + '\\s';	// NOT YET IMPLEMENTED
 						}
 						else	// must be a literal
 						{
@@ -1273,7 +1313,7 @@ function compile(strInput_a, objOptions_a)
 			else if (objLine.action === 'constructor_call')
 			{
 				objResult = objLine;
-				objResult.line = '\t; TODO CALL, ' + objResult.action + ', ' + objResult.line + '\\s';	// TODO 2
+				objResult.line = '\t; TODO CALL, ' + objResult.action + ', ' + objResult.line + '\\s';	// NOT YET IMPLEMENTED
 			}
 			else if (objLine.action === 'constructor_declare_variable')
 			{
@@ -1335,14 +1375,14 @@ function compile(strInput_a, objOptions_a)
 			else if (objLine.action === 'call')
 			{
 				objResult = objLine;
-				objResult.line = '\t; TODO CALL, ' + objResult.action + ', ' + objResult.line + '\\s';	// TODO 3
+				objResult.line = '\t; TODO CALL, ' + objResult.action + ', ' + objResult.line + '\\s';	// NOT YET IMPLEMENTED
 			}
 			else if (objLine.action === 'declare_parameters')
 			{
 				objResult = objLine;
 				if (objResult.parameters.length > 0)
 				{
-					objResult.line = '\t; TODO PARAMETERS, ' + objResult.action + ', ' + objResult.parameters + '\\s';	// TODO 4
+					objResult.line = '\t; TODO PARAMETERS, ' + objResult.action + ', ' + objResult.parameters + '\\s';	// NOT YET IMPLEMENTED
 				}
 				else
 				{
@@ -1394,7 +1434,7 @@ function compile(strInput_a, objOptions_a)
 			else if (objLine.action === 'return_value')
 			{
 				objResult = objLine;
-				objResult.line = '\t; TODO RETURN, ' + objResult.action + ', ' + objResult.line + '\\s';	// TODO 5
+				objResult.line = '\t; TODO RETURN, ' + objResult.action + ', ' + objResult.line + '\\s';	// NOT YET IMPLEMENTED
 			}
 			else if (objLine.action === 'return_void')
 			{
